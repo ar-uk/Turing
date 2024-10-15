@@ -1,0 +1,102 @@
+import java.util.HashMap;
+import java.util.Map;
+
+public class TuringMachine {
+    // Define tape, head, and states
+    private char[] tape;
+    private int head;
+    private String currentState;
+
+    // Transition rules: (CurrentState, CurrentSymbol) -> (NewState, NewSymbol, Direction)
+    private Map<String, Transition> transitionFunction;
+
+    // Tape's blank symbol
+    private static final char BLANK = '_';
+
+    // Constructor
+    public TuringMachine(String input, String initialState) {
+        // Initialize the tape with the input and extra blank symbols
+        this.tape = (input + "______").toCharArray();
+        this.head = 0; // Start at the beginning of the tape
+        this.currentState = initialState;
+        this.transitionFunction = new HashMap<>();
+    }
+
+    // Define a transition rule for the machine
+    public void addTransition(String currentState, char currentSymbol, String newState, char newSymbol, char direction) {
+        String key = currentState + currentSymbol;
+        transitionFunction.put(key, new Transition(newState, newSymbol, direction));
+    }
+
+    // Run the Turing machine
+    public void run() {
+        while (!currentState.equals("HALT")) {
+            char currentSymbol = tape[head];
+            String key = currentState + currentSymbol;
+
+            // If there is no valid transition, halt the machine
+            if (!transitionFunction.containsKey(key)) {
+                System.out.println("No valid transition found. Halting...");
+                break;
+            }
+
+            // Get the transition details
+            Transition transition = transitionFunction.get(key);
+
+            // Perform the write operation
+            tape[head] = transition.newSymbol;
+
+            // Move the head left or right
+            if (transition.direction == 'R') {
+                head++;
+            } else if (transition.direction == 'L') {
+                head--;
+            }
+
+            // Update the current state
+            currentState = transition.newState;
+
+            // Halt if the head moves out of bounds
+            if (head < 0 || head >= tape.length) {
+                System.out.println("Head moved out of bounds. Halting...");
+                break;
+            }
+        }
+    }
+
+    // Print the current state of the tape
+    public void printTape() {
+        System.out.println("Tape: " + new String(tape));
+        System.out.println("Head position: " + head);
+    }
+
+    // Transition class representing a state transition
+    class Transition {
+        String newState;
+        char newSymbol;
+        char direction;
+
+        Transition(String newState, char newSymbol, char direction) {
+            this.newState = newState;
+            this.newSymbol = newSymbol;
+            this.direction = direction;
+        }
+    }
+
+    // Main method to run the machine
+    public static void main(String[] args) {
+        // Initialize a Turing machine with a binary input and starting state "q0"
+        TuringMachine tm = new TuringMachine("1011", "q0");
+
+        // Define transition rules (CurrentState, CurrentSymbol, NewState, NewSymbol, Direction)
+        tm.addTransition("q0", '1', "q1", '0', 'R');  // Example: if in q0 and read 1, write 0, move right, go to q1
+        tm.addTransition("q1", '0', "q2", '1', 'R');  // Example: if in q1 and read 0, write 1, move right, go to q2
+        tm.addTransition("q2", '1', "HALT", '1', 'N'); // Halt after reading the next 1 in q2
+
+        // Run the Turing machine
+        tm.run();
+
+        // Print the final state of the tape
+        tm.printTape();
+    }
+}
